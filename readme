@@ -1,0 +1,10 @@
+adicionar no .bashrc com o comando 
+sudo nano ./bashrc
+
+export PACKAGES_PATH="/home/luizr/.buildozer/android/packages"
+export ANDROIDSDK="/home/luizr/.buildozer/android/platform/android-sdk"
+export ANDROIDNDK="/home/luizr/.buildozer/android/platform/android-ndk-r19c"
+export ANDROIDAPI="27"
+export ANDROIDMINAPI="21"
+export PATH=~/Library/Android/sdk/tools:$PATH
+export PATH=~/Library/Android/sdk/platform-tools:$PATH
