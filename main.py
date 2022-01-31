@@ -1,39 +1,99 @@
-from kivy.app import App
-from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager, Screen
-from kivy.uix.gridlayout import GridLayout
-from kivy.properties import StringProperty
-import src.color_calibration as color_calibration
+from datetime import MAXYEAR
+from flask import Flask, render_template, request, redirect, url_for
+from sqlalchemy.sql import func
+from flask import session
 
-class MainWindow(Screen):
-	pass
+import hashlib
+import os
+import string
+import random
 
-class SecondWindow(Screen):
-	pass
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'password'
 
-class ThirdWindow(Screen):
-	pass
-#	def on_touch_down(self, touch):
-#		if self.img.collide_point(*touch.pos):
-#			self.manager.image_source  = color_calibration.draw_circles(self.manager.image_source,touch)
+def send_data():
+        upload_file = "answers/" + str(session['subject_id'])+".txt"
 
-class WindowManager(ScreenManager):
-    image_source = StringProperty()
-    def selected(self,filename):
-        try:    
-            self.image_source = filename[0]
-        except:
-            pass
-    def calibrate(self):		
-        self.image_source  = color_calibration.draw_circles(self.image_source)		
+        file = open(upload_file, "w")
 
-kv = Builder.load_file("color.kv")
+        file.write('\n'.join(session['answers'])) 
+        file.close()
+
+@app.route('/')
+def index():
+    return render_template('index.html')
+
+@app.route('/thank_you')
+def thank_you():
+    return render_template('thank_you.html')
+
+@app.route('/new_subject', methods=['GET', 'POST'])
+def new_subject():
+
+    if request.method == 'POST':
+        email = request.form["email"]
+        hash = hashlib.md5(email.encode('utf-8')).digest()
+        hash_str = str(int.from_bytes(hash,"big"))
+        print(hash_str,"hash str")
+
+        session['subject_id'] = hash_str
+        session['question_counter'] = 0
+        session['answers'] = []
+	
+        return redirect(url_for('interview'))
+
+    return render_template('new_subject.html')
+
+@app.route('/interview', methods=['GET', 'POST'])
+def interview():
+
+    global max_questions
+
+    def get_video_paths():
+        ours_path = "static/videos/ours/"
+        baseline_path = "static/videos/baseline/"
+
+        ours = os.listdir(ours_path)
+        baseline = os.listdir(baseline_path)
+
+        print("ours",ours)#random.shuffle(videos)
+        print("baseline",baseline)#random.shuffle(videos)
+        print("ours_path",ours_path)#random.shuffle(videos)
+        print("baseline_path",baseline_path)#random.shuffle(videos)
+
+        for i in range(len(baseline)):
+            baseline[i] = baseline_path + baseline[i]
+        for i in range(len(ours)):
+            ours[i] = ours_path + ours[i]
+
+        baseline_1, baseline_2 = random.sample(baseline,2)
+        videos = [random.choice(ours),baseline_1,baseline_2]
+
+        session['question_counter'] = session['question_counter'] + 1
+
+        return videos
+
+    if request.method == 'POST':
+        print("CHOICES",request.form["choice"])
+        post = request.form["choice"]
+        chosen = post.split(',')[0][1:]
+        options = post.replace(chosen,"")[3:-1]
+
+        print("CHOSen",chosen)
+        print("Options",options)
+
+        global answers
+        answer = "chosen index " + str(chosen) + " of " + str(options) 
+        session['answers'].append(answer)
+
+        if session['question_counter'] >= max_questions:
+            send_data()
+            return redirect(url_for('thank_you'))
+	
+    return render_template('interview.html', video=get_video_paths(), question_counter=str(session['question_counter']), max_questions=str(max_questions))
+    
+if __name__ == '__main__':
+    max_questions = 3
+    app.run(host='0.0.0.0', port=8875, debug=False, threaded=True)
 
 
-class ColorApp(App):
-    def build(self):
-        return kv
-
-
-if __name__ == "__main__":
-    ColorApp().run()
