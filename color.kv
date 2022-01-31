@@ -49,8 +49,7 @@ WindowManager:
             screen: classification_results
             source: self.screen.manager.image_source
             size_hint: 1, 10        
-        Label:
-            text: "Here comes the classification result"
-            font_size: 30
-            size_hint: 1, 2
-            id: label
+        Button:
+            text: "Calibrar!"
+            on_release:
+            	app.root.calibrate()
