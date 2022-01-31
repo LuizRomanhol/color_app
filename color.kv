@@ -1,0 +1,56 @@
+WindowManager:
+    MainWindow:
+    SecondWindow:
+    ThirdWindow:
+
+<MainWindow>:
+    name: "main"
+
+    GridLayout:
+        cols:1
+
+        GridLayout:
+            cols: 1
+
+            Label:
+                text: "Password: "
+
+
+        Button:
+            text: "Submit"
+            on_release:
+                app.root.current = "second"
+                root.manager.transition.direction = "left"
+
+
+<SecondWindow>:
+    name: "second"
+    id: image_selector
+    BoxLayout:
+        orientation: 'vertical'
+        id: image_box
+        FileChooserIconView:
+            id: filechooser
+            on_selection: 
+                root.manager.selected(filechooser.selection)      
+                app.root.current = "classification_result"    
+            size_hint: 1, 10           
+
+<ThirdWindow>:
+    name: "third"
+    name: "classification_result"
+    id: classification_results
+    img:img
+    BoxLayout:
+        orientation: 'vertical'
+        id: box
+        Image:
+            id: img
+            screen: classification_results
+            source: self.screen.manager.image_source
+            size_hint: 1, 10        
+        Label:
+            text: "Here comes the classification result"
+            font_size: 30
+            size_hint: 1, 2
+            id: label
